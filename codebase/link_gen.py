@@ -2,7 +2,7 @@ from .httpclient import HttpClient
 from bs4 import BeautifulSoup as bs
 from .captcha import *
 from .m3u8 import *
-
+import sys
 
 req = HttpClient()
 #some global shit
@@ -26,9 +26,14 @@ def get_rapid_link(ep_id):
     r=req.get(f"{main_url}/ajax/episode/servers?episodeId={ep_id}",headers={"X-Requested-With":"XMLHttpRequest"})
     soup = bs(r.json().get("html"),"html.parser")
     x["sub"] = [i.select(".item")[0]["data-id"] for i in soup.select(".servers-sub")][0]
-    x["dub"] = [i.select(".item")[0]["data-id"] for i in soup.select(".servers-dub")][0]
-    
+    try:
+        x["dub"] = [i.select(".item")[0]["data-id"] for i in soup.select(".servers-dub")][0]
+    except:
+        x["dub"] = ""
     server_id = x[ask_sub_dub()]
+    
+    if server_id == "":
+        sys.exit()
     
     #get the link
     r=req.get(
