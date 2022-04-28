@@ -4,7 +4,14 @@ import sys
 import os
 from codebase.search import *
 from codebase.link_gen import *
+from codebase.httpclient import *
 
+req = HttpClient()
+
+#create download directory
+if not os.path.exists('downloads'):
+    os.mkdir('downloads')
+    
 #clear screen function
 def clear():
     os.system('cls' if os.name == 'nt' else 'clear')
@@ -35,7 +42,7 @@ def ask_q(q):
     return q[c-1][1]
         
     
-
+#function to stream episode
 def stream_episode(name,e_id,ep_num,last_ep):
     clear()
     link = get_rapid_link(e_id)
@@ -59,7 +66,36 @@ def stream_episode(name,e_id,ep_num,last_ep):
         
         stream_episode(name,str(ep_id),str(ep_num),last_ep)
     
+#function to download episode
+def download_episode(path,name,e_id,ep_num,last_ep):
+    clear()
+    link = get_rapid_link(e_id)
+    subs,q = get_final_links(link)
     
+    s=ask_sub(subs)
+    clear()
+    colored_print(f"[*]Downloading {name}: episode :{ep_num}")
+    link = ask_q(q)
+    
+    os.system(f'ffmpeg -loglevel error -stats -i "{link}" -c copy "{path}/{name}.mp4"')
+    
+    colored_print("[*]Downloading subtitles")
+    r=req.get(s)
+    with open(f'{path}/{name}.srt', 'wb') as f:
+        f.write(r.content)
+    f.close()
+
+    if (int(ep_num) + 1 <= int(last_ep)):
+        opt = input(("[*]Want to start next episode[y/n]: "))
+        
+        if (opt == "n"):
+            sys.exit()
+            
+        ep_id = int(e_id) + 1
+        ep_num = int(ep_num) + 1
+        
+        download_episode(path,name,str(ep_id),str(ep_num),last_ep)
+        
     
  
 def main():
@@ -85,7 +121,8 @@ def main():
             path = "downloads\\" + anime_name[choice-1].replace(" ","_")
             if not os.path.exists(path):
                 os.makedirs(path)
-            #download_episode(path,anime_to_watch,ep_num,last_episode)
+            download_episode(path,anime_name[choice-1],e_id,ep_num,len(e_ids))
+            
         else:
             stream_episode(anime_name[choice-1],e_id,ep_num,len(e_ids))    
         
