@@ -1,0 +1,6 @@
+regex
+beautifulsoup4
+httpx
+termcolor
+yarl
+lxml
